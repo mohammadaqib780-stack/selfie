@@ -1,6 +1,7 @@
+# Base Python image
 FROM python:3.10-slim
 
-# Install system dependencies
+# Install system dependencies for OpenCV/DeepFace
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0 \
@@ -9,15 +10,15 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy files
+# Copy requirements and install Python packages
 COPY requirements.txt .
-COPY main.py .
-
-# Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy your FastAPI app
+COPY main.py .
 
 # Expose port
 EXPOSE 8000
 
-# Start the server
+# Start the FastAPI server
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
