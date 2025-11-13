@@ -2,6 +2,8 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse
 from deepface import DeepFace
 import shutil
+import os
+import uvicorn
 
 app = FastAPI()
 
@@ -11,11 +13,13 @@ async def verify_faces(file1: UploadFile = File(...), file2: UploadFile = File(.
         path1 = f"temp_{file1.filename}"
         path2 = f"temp_{file2.filename}"
 
+        # Save uploaded files temporarily
         with open(path1, "wb") as buffer:
             shutil.copyfileobj(file1.file, buffer)
         with open(path2, "wb") as buffer:
             shutil.copyfileobj(file2.file, buffer)
 
+        # Run DeepFace verification with multiple models
         models = ["VGG-Face", "Facenet", "OpenFace", "DeepFace", "ArcFace"]
         results = {}
 
@@ -29,6 +33,7 @@ async def verify_faces(file1: UploadFile = File(...), file2: UploadFile = File(.
             except Exception as e:
                 results[m] = {"error": str(e)}
 
+        # Final decision: majority vote
         verified_votes = sum(1 for r in results.values() if isinstance(r, dict) and r.get("verified"))
         final_verified = verified_votes >= 3
 
@@ -40,3 +45,10 @@ async def verify_faces(file1: UploadFile = File(...), file2: UploadFile = File(.
 
     except Exception as e:
         return {"error": str(e)}
+
+# ===============================
+# Run Uvicorn with dynamic PORT
+# ===============================
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))  # Railway sets PORT automatically
+    uvicorn.run(app, host="0.0.0.0", port=port)
