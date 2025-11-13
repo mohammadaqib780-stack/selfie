@@ -19,7 +19,5 @@ COPY main.py .
 # Expose port
 EXPOSE 8000
 
-# Start FastAPI server
-CMD ["python", "main.py"]
-
-
+# Start FastAPI server using uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

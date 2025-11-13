@@ -46,9 +46,5 @@ async def verify_faces(file1: UploadFile = File(...), file2: UploadFile = File(.
     except Exception as e:
         return {"error": str(e)}
 
-# ===============================
-# Run Uvicorn with dynamic PORT
-# ===============================
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))  # Railway sets PORT automatically
-    uvicorn.run(app, host="0.0.0.0", port=port)
+
+
