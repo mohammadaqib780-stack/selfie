@@ -7,3 +7,4 @@ scipy
 tensorflow
 mtcnn
 tf-keras
+python-multipart
