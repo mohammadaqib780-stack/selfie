@@ -16,16 +16,13 @@ async def verify_faces(file1: UploadFile = File(...), file2: UploadFile = File(.
         with open(path2, "wb") as buffer:
             shutil.copyfileobj(file2.file, buffer)
 
-        # ---------------------------------------
-        # STEP 1: FACE DETECTION CHECK
-        # ---------------------------------------
+        # -------- STRICT FACE DETECTION (MTCNN) --------
         def has_valid_face(img_path):
             try:
-                faces = DeepFace.extract_faces(img_path)
-                # If no face OR confidence too low
-                if len(faces) == 0: 
+                faces = DeepFace.extract_faces(img_path, detector_backend='mtcnn')
+                if len(faces) == 0:
                     return False
-                if faces[0]["confidence"] < 0.70:  # 70% minimum
+                if faces[0]["confidence"] < 0.90:
                     return False
                 return True
             except:
@@ -35,12 +32,10 @@ async def verify_faces(file1: UploadFile = File(...), file2: UploadFile = File(.
             os.remove(path1); os.remove(path2)
             return JSONResponse(content={
                 "final_verified": False,
-                "error": "Face not detected or poor quality face."
+                "error": "No real human face detected."
             })
 
-        # ---------------------------------------
-        # STEP 2: VERIFICATION
-        # ---------------------------------------
+        # -------- FACE VERIFICATION (MTCNN + ArcFace/Facenet) --------
         models = ["ArcFace", "Facenet"]
         THRESHOLD = 0.85
 
@@ -48,15 +43,21 @@ async def verify_faces(file1: UploadFile = File(...), file2: UploadFile = File(.
         votes = 0
 
         for m in models:
-            res = DeepFace.verify(path1, path2, model_name=m, enforce_detection=True)
+            res = DeepFace.verify(
+                img1_path=path1,
+                img2_path=path2,
+                model_name=m,
+                detector_backend="mtcnn",
+                enforce_detection=True
+            )
+
             distance = float(res["distance"])
             verified = distance < THRESHOLD
+
             if verified:
                 votes += 1
-            results[m] = {
-                "verified": verified,
-                "distance": distance
-            }
+
+            results[m] = {"verified": verified, "distance": distance}
 
         final_verified = votes >= 1
 
